@@ -1,0 +1,21 @@
+{
+  "name": "podcaster-ractive",
+  "version": "1.0.0",
+  "description": "Little ractive app to play music podcasts showing how to use ps-ractive-router ",
+  "main": "index.js",
+  "scripts": {
+    "start": "node_modules/node-static/bin/cli.js"
+  },
+  "author": "Paquitosoft",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^3.3.5",
+    "es6-promise": "^3.0.2",
+    "lscache": "^1.0.5",
+    "ractive": "^0.7.3",
+    "whatwg-fetch": "^0.9.0"
+  },
+  "devDependencies": {
+    "node-static": "^0.7.7"
+  }
+}
