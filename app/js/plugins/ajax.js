@@ -6,10 +6,11 @@
 		jsonpTimeoutHandler = function(){};
 
 	function checkResponseStatus(res) {
+		var error;
 		if (res.status < 400) {
 			return res;
 		} else {
-			var error = new Error(res.statusText);
+			error = new Error(res.statusText);
 			error.statusCode = res.status;
 			error.response = res;
 			throw error;
@@ -42,10 +43,9 @@
 		});
 	}
 
-	function cacheResponse(ttl, key) {
+	function cacheResponse(ttl) {
 		return function(data) {
 			if (ttl) {
-				console.log('Ajax::cacheResponse# Caching response with key:', key, 'for', ttl, 'minutes.');
 				lscache.set(data.url, data.result, ttl); // Last parameter is TTL in minutes
 			}
 			return data.result;
@@ -75,20 +75,20 @@
 		return getData(url, xmlParser, options);
 	}
 
-	function getText() {
+	function getText(url, options) {
 		return getData(url, textParser, options);
 	}
 
 	function putJson(url, data) {
 		return fetch(url, {
-				method: 'put',
-				headers: {
-					'Accept': 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(data)
-			})
-			.then(checkResponseStatus);
+			method: 'put',
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(data)
+		})
+		.then(checkResponseStatus);
 	}
 
 
@@ -119,7 +119,7 @@
 				resolve(data);
 				setTimeout(function() {
 					delete window[callbackFnName];
-					if (toHandler) clearTimeout(toHandler);
+					if (toHandler) { clearTimeout(toHandler); }
 				}, 4);
 			};
 

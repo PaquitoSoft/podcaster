@@ -24,7 +24,7 @@
 			var property = (orderKey === 'last-updated') ? 'lastEpisodeDate' : 'isFavorite';
 
 			return podcasts.sort(function(a, b) {
-				return (+b[property]) - (+a[property]);
+				return (Number(b[property]) - Number(a[property]));
 			});
 		},
 		events: {

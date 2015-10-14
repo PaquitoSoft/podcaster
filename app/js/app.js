@@ -2,11 +2,10 @@
 	'use strict';
 
 	var BaseApp = PSRR.BaseApp,
-		ajax = APP.plugins.ajax,
 		templates = APP.plugins.templates,
 		routesConfiguration = APP.config.routes;
 	
-	var App = BaseApp.extend({
+	BaseApp.extend({
 		el: '#app',
 		template: templates.getTemplate('app-tpl'),
 		routesConfiguration: routesConfiguration,

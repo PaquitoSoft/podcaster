@@ -16,7 +16,7 @@
 				podcast: request.locals.podcast,
 				episode: request.locals.episode
 			});
-		},
+		}
 	});
 
 	APP.components.pages.EpisodePage = EpisodePage;
