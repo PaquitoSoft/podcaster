@@ -1,13 +1,13 @@
-(function(APP) {
+(function() {
 	'use strict';
 
-	var templates = APP.plugins.templates;
+	define(['Ractive', 'text!templates/partials/podcast-sidebar.html'],
+		function(Ractive, template) {
+			return Ractive.extend({
+				isolated: true,
+				template: template
+			});
+		}
+	);
 
-	var PodcastSidebar = Ractive.extend({
-		isolated: true,
-		template: templates.getTemplate('podcast-sidebar-partial-tpl')
-	});
-
-	APP.components.partials.PodcastSidebar = PodcastSidebar;
-
-}(window.PodcasterApp));
+}());

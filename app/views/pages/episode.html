@@ -1,0 +1,15 @@
+<div>
+	<PodcastSidebar podcast={{podcast}} />
+	
+	<div class="col-md-8 col-md-offset-1 section">
+		<div class="episode-detail">
+			<div class="title">{{episode.title}}</div>
+			<div class="subtitle">{{{episode.description}}}</div>
+			<hr/>
+			<div class="player">
+				<audio src={{episode.mediaUrl}} controls></audio>
+			</div>
+		</div>
+	</div>
+
+</div>
