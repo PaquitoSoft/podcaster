@@ -1,0 +1,20 @@
+<div class="podcasts-grid">
+	<div class="row filter">
+		<div class="col-md-5 col-md-offset-7">
+			<span class="badge">{{podcasts.length}}</span>
+			<input id="filter" type="text" class="form-control input-lg" autoFocus 
+				placeholder="Filter podcasts..." on-input="filterPodcasts" value="{{filter}}">
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<div class="row podcasts">
+				{{#podcasts}}
+					{{> podcastSummary}}
+				{{/podcasts}}
+			</div>
+		</div>
+	</div>
+
+</div>

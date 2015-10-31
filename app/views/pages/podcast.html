@@ -1,0 +1,35 @@
+<div>
+	<PodcastSidebar podcast={{podcast}} />
+
+	<div class="col-md-8 col-md-offset-1 section podcast-episodes-count">
+		<span>
+			Episodes: {{podcast.episodes.length}}
+		</span>
+	</div>
+
+	<div class="col-md-8 col-md-offset-1 section">
+		<div class="podcast-episodes">
+			<table class="table table-hover table-striped">
+				<thead>
+					<tr>
+						<th>Title</th>
+						<th>Date</th>
+						<th>Duration</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#podcast.episodes}}
+						<tr class="podcast-episode-summary">
+							<td>
+								<a href="/podcast/{{podcast.id}}/episode/{{id}}" on-click="navToEpisode">{{title}}</a>
+							</td>
+							<td>{{date}}</td>
+							<td class="duration">{{duration}}</td>
+						</tr>
+					{{/podcast.episodes}}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</div>

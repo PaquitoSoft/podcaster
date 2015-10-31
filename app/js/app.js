@@ -1,31 +1,35 @@
-(function(APP) {
-	'use strict';
+import { RouterEngine, RouterEvents } from './plugins/router';
+import routesConfiguration from './config/routes';
+import * as dom from './plugins/dom';
 
-	var BaseApp = PSRR.BaseApp,
-		templates = APP.plugins.templates,
-		routesConfiguration = APP.config.routes;
-	
-	BaseApp.extend({
-		el: '#app',
-		template: templates.getTemplate('app-tpl'),
-		routesConfiguration: routesConfiguration,
-		onBeforeNavigation: function() {
-			this.set('loading', true);
-		},
-		onNavigationDone: function() {
-			window.scrollTo(0, 0);
-			this.set('loading', false);
-		},
-		showError: function(message, err) {
-			console.log('What an error!!!', err.stack);
-			this.set('errorMsg', message);
-			setTimeout(function() {
-				this.set('errorMsg', null);
-			}.bind(this), 2500);
-		},
-		data: {
-			loading: false
-		}
-	});
+let $loader = dom.findEl('.spinner'),
+	$homeLink = dom.findById('app-title'),
+	$mainContainer = dom.findById('app-view'),
+	appRouter;
 
-}(window.PodcasterApp));
+// Configure application title navigation
+$homeLink.addEventListener('click', (event) => {
+	event.preventDefault();
+	RouterEngine.navTo(event.target.getAttribute('href'));
+});
+
+// Create a router instance and listen to it
+appRouter = new RouterEngine($mainContainer, routesConfiguration); // TODO Pass handlers configuration
+
+appRouter.on(RouterEvents.navigationStart, () => {
+	$loader.classList.remove('hidden');	
+});
+
+appRouter.on(RouterEvents.navigationEnd, () => {
+	$loader.classList.add('hidden');
+	window.scrollTo(0, 0);
+});
+
+appRouter.on(RouterEvents.navigationError, (error) => {
+	console.error('APP::errorHandler# TODO - Show error to the user:', error);
+	console.error(error.stack);
+});
+
+appRouter.on(RouterEvents.routeNotFound, (path) => {
+	console.error('APP::pageNotFoundHandler# Route not handled:', path);
+});

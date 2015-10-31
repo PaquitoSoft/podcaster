@@ -8,199 +8,32 @@
 		<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
 		<link rel="stylesheet" href="app/styles/app.css">
 		<!-- endbuild -->
-
-		<script>
-			window.PodcasterApp = {
-				components: {
-					pages: {},
-					partials: {}
-				},
-				plugins: {},
-				models: {},
-				config: {}
-			};
-		</script>
 	</head>
 
 	<body>
 
 		<!-- APP main container -->
-		<div id="app"></div>
-
-		<!-- Components templates -->
-		<script id="podcast-summary-partial-tpl" type="text/_template">
-			<div class="col-xs-12 col-sm-3 col-md-3 col-lg-3 podcast-summary">
-				<div class="box">
-					<a href="/podcast/{{podcast.id}}">
-						<div class="box-icon">
-							<img src={{podcast.cover}} alt={{podcast.name}}>
-						</div>
-						<div class="info">
-							<h4 class="text-center">{{podcast.name}}</h4>
-							<p>
-								<span class="text-center">
-									<span>Author: </span>
-									<span>{{podcast.author}}</span>
-									<div class="favorite-buttons">
-										<span class="glyphicon glyphicon-star {{^podcast.isFavorite}}glyphicon-star-empty{{/}}" aria-hidden="true" on-click="toggleFavorite"></span>
-									</div>
-								</span>
-							</p>
-						</div>
-					</a>
-				</div>
-			</div>
-		</script>
-
-		<script id="podcast-sidebar-partial-tpl" type="text/_template">
-			<div class="col-md-3 section">
-				<div class="podcast-cover text-center">
-					<a href="/podcast/{{podcast.id}}">
-						<img src="{{podcast.cover}}" alt="{{podcast.name}}">
-					</a>
-				</div>
-				<hr/>
-
-				<div class="podcast-title">
-					<a href="/podcast/{{podcast.id}}">
-						<div class="title">{{podcast.name}}</div>
-						<div class="author"><span>by&nbsp;</span>{{podcast.author}}</div>	
-					</a>
-				</div>
-				<hr/>
-
-				<div class="podcast-description">
-					<div>Description:</div>
-					<p>{{podcast.description}}</p>
-				</div>
-			</div>
-		</script>
-
-		<script id="home-page-tpl" type="text/_template">
-			<div class="podcasts-grid">
-				<div class="row filter">
-					<div class="col-md-5">
-						<button type="button" class="btn btn-default {{#order ==='last-updated'}}btn-primary{{/}}" on-click="changeOrder:{{'last-updated'}}">Last updated</button>
-						<button type="button" class="btn btn-default {{#order ==='favorite'}}btn-primary{{/}}" on-click="changeOrder:{{'favorite'}}">Favorites</button>
-					</div>
-					<div class="col-md-5 col-md-offset-2">
-						<span class="badge">{{podcasts.length}}</span>
-						<input id="filter" type="text" class="form-control input-lg" autoFocus 
-							placeholder="Filter podcasts..." on-input="filterPodcasts" value="{{filter}}">
-					</div>
-				</div>
-
-				<div class="row">
-					<div class="col-md-12">
-						<div class="row podcasts">
-							{{#podcasts}}
-								<PodcastSummary podcast="{{.}}" />
-							{{/podcasts}}
-						</div>
-					</div>
-				</div>
-
-			</div>
-		</script>
-
-		<script id="podcast-page-tpl" type="text/_template">
-			<div>
-				<PodcastSidebar podcast={{podcast}} />
-
-				<div class="col-md-8 col-md-offset-1 section podcast-episodes-count">
-					<span>
-						Episodes: {{podcast.episodes.length}}
-					</span>
-				</div>
-
-				<div class="col-md-8 col-md-offset-1 section">
-					<div class="podcast-episodes">
-						<table class="table table-hover table-striped">
-							<thead>
-								<tr>
-									<th>Title</th>
-									<th>Date</th>
-									<th>Duration</th>
-								</tr>
-							</thead>
-							<tbody>
-								{{#podcast.episodes}}
-									<tr class="podcast-episode-summary">
-										<td>
-											<a href="/podcast/{{podcast.id}}/episode/{{id}}" on-click="navToEpisode">{{title}}</a>
-										</td>
-										<td>{{date}}</td>
-										<td class="duration">{{duration}}</td>
-									</tr>
-								{{/podcast.episodes}}
-							</tbody>
-						</table>
-					</div>
-				</div>
-
-			</div>
-		</script>
-
-		<script id="episode-page-tpl" type="text/_template">
-			<div>
-				<PodcastSidebar podcast={{podcast}} />
-				
-				<div class="col-md-8 col-md-offset-1 section">
-					<div class="episode-detail">
-						<div class="title">{{episode.title}}</div>
-						<div class="subtitle">{{{episode.description}}}</div>
-						<hr/>
-						<div class="player">
-							<audio src={{episode.mediaUrl}} controls></audio>
-						</div>
-					</div>
-				</div>
-
-			</div>
-		</script>
-
-		<script id="app-tpl" type="text/_template">
+		<div id="app">
 			<div>
 				<div class="header clearfix">
 					<h3 class="text-muted">
-						<a href="/">
+						<a id="app-title" href="/">
 							Podcaster
 						</a>
-						<div class="spinner {{^loading}}hidden{{/}}">
+						<div class="spinner hidden">
 							<div class="double-bounce1"></div>
 							<div class="double-bounce2"></div>
 						</div>
 					</h3>
 				</div>
 
-				<div class="main-content">
-					<Router />
+				<div id="app-view" class="main-content">
 				</div>
 			</div>
-		</script>
+		</div>
 
 		<!-- APP scripts -->
-
-		<!-- build:js js/vendor.js -->
-		<script src="node_modules/es6-promise/dist/es6-promise.js"></script>
-		<script src="node_modules/whatwg-fetch/fetch.js"></script>
-		<script src="node_modules/ractive/ractive.js"></script>
-		<script src="node_modules/ps-ractive-router/dist/ps-ractive-router.js"></script>
-		<script src="node_modules/lscache/lscache.js"></script>
-		<!-- endbuild -->
-
-		<!-- build:js js/app.js -->
-		<script src="app/js/plugins/ajax.js"></script>
-		<script src="app/js/plugins/templates.js"></script>
-		<script src="app/js/models/podcast.js"></script>
-		<script src="app/js/components/partials/podcast-summary.js"></script>
-		<script src="app/js/components/partials/podcast-sidebar.js"></script>
-		<script src="app/js/components/pages/home-page.js"></script>
-		<script src="app/js/components/pages/podcast-page.js"></script>
-		<script src="app/js/components/pages/episode-page.js"></script>
-		<script src="app/js/config/routes.js"></script>
-		<script src="app/js/app.js"></script>
-		<!-- endbuild -->
-
+		<script src="build/js/podcaster-app.js"></script>
+		
 	</body>
 </html>
