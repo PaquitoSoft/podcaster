@@ -174,16 +174,17 @@
 		_createClass(RouterEngine, [{
 			key: 'navigate',
 			value: function navigate(info) {
-				var ctrl = new info.Controller(info.data);
+				var ctrl = new info.Controller(info.data),
+				    $newEl = ctrl.render();
 
 				// Clean up previous controller
 				if (this.currentController) {
 					this.currentController.destroy();
 				}
 
-				// dom.emptyEl(this.$mainEl);
-				this.$mainEl.innerHTML = '';
-				this.$mainEl.appendChild(ctrl.render());
+				ctrl.onBeforeMounted();
+				this.$mainEl.replaceChild($newEl, this.$mainEl.firstChild);
+				ctrl.onInsertedIntoDOM($newEl);
 				this.currentController = ctrl;
 
 				this.trigger(RouterEvents.navigationEnd, event);
@@ -2728,13 +2729,21 @@
 		value: true
 	});
 
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
 	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var _lscache = __webpack_require__(11);
+
+	var _lscache2 = _interopRequireDefault(_lscache);
 
 	var _baseController = __webpack_require__(15);
 
@@ -2748,6 +2757,12 @@
 
 	var _viewsPartialsPodcastSummaryHtml2 = _interopRequireDefault(_viewsPartialsPodcastSummaryHtml);
 
+	var _pluginsDom = __webpack_require__(8);
+
+	var dom = _interopRequireWildcard(_pluginsDom);
+
+	var FILTER_KEY = 'prev-filter';
+
 	var HomeController = (function (_BaseController) {
 		_inherits(HomeController, _BaseController);
 
@@ -2759,9 +2774,56 @@
 				template: _viewsPagesHomeHtml2['default'],
 				partials: {
 					podcastSummary: _viewsPartialsPodcastSummaryHtml2['default']
+				},
+				domEvents: {
+					'keyup|#filter': 'onFilterPodcasts'
 				}
 			});
+
+			this.data.originalPodcasts = data.podcasts;
+			this.data.filter = _lscache2['default'].get(FILTER_KEY) || '';
 		}
+
+		_createClass(HomeController, [{
+			key: '_filterPodcasts',
+			value: function _filterPodcasts(filter) {
+				console.log('HomeController::filterPodcasts# Filtering...', filter);
+				this.data.filter = filter;
+				var regExp = new RegExp(filter, 'i');
+
+				console.debug('HomeController::filteringPodcasts# Previous podcasts length:', this.data.podcasts.length);
+				console.time('filteringPodcasts');
+				this.data.podcasts = this.data.originalPodcasts.filter(function (podcast) {
+					return regExp.test(podcast.name + podcast.author);
+				});
+				console.timeEnd('filteringPodcasts');
+
+				this.update();
+
+				_lscache2['default'].set(FILTER_KEY, filter);
+			}
+		}, {
+			key: 'onMounted',
+			value: function onMounted() {
+				if (this.data.filter) {
+					this._filterPodcasts(this.data.filter);
+				}
+			}
+		}, {
+			key: 'onFilterPodcasts',
+			value: function onFilterPodcasts(event, $target) {
+				this._filterPodcasts($target.value);
+			}
+		}, {
+			key: 'update',
+			value: function update() {
+				var $updatedEl = this.render(),
+				    $prevPodcasts = dom.findEl('.podcasts', this.$el);
+
+				dom.findEl('.badge', this.$el).innerHTML = this.data.podcasts.length;
+				$prevPodcasts.parentNode.replaceChild(dom.findEl('.podcasts', $updatedEl), $prevPodcasts);
+			}
+		}]);
 
 		return HomeController;
 	})(_baseController2['default']);
@@ -2825,6 +2887,13 @@
 				}
 			}
 		}, {
+			key: 'onInsertedIntoDOM',
+			value: function onInsertedIntoDOM($el) {
+				this.$el = $el;
+				this.configureEvents();
+				this.onMounted();
+			}
+		}, {
 			key: 'navTo',
 			value: function navTo(event, $target) {
 				event.preventDefault();
@@ -2834,9 +2903,18 @@
 			key: 'render',
 			value: function render() {
 				var doc = this.domParser.parseFromString(_mustache2['default'].render(this.template, this.data, this.partials), 'text/html');
-				this.$el = doc.body.firstChild;
-				this.configureEvents();
-				return this.$el;
+				return doc.body.firstChild;
+			}
+		}, {
+			key: 'update',
+			value: function update() {
+				var $parent = this.$el.parentNode,
+				    $oldEl = this.$el,
+				    $newEl = this.render();
+
+				dom.removeEvents($oldEl);
+				$parent.replaceChild($newEl, $oldEl);
+				this.$el = $newEl;
 			}
 		}, {
 			key: 'destroy',
@@ -2844,6 +2922,14 @@
 				dom.removeEvents(this.$el);
 				this.$el = null;
 			}
+
+			// Hooks
+		}, {
+			key: 'onBeforeMounted',
+			value: function onBeforeMounted() {}
+		}, {
+			key: 'onMounted',
+			value: function onMounted() {}
 		}]);
 
 		return BaseController;
@@ -2999,7 +3085,7 @@
 /* 20 */
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n\t{{> podcastSidebar}}\n\t\n\t<div class=\"col-md-8 col-md-offset-1 section\">\n\t\t<div class=\"episode-detail\">\n\t\t\t<div class=\"title\">{{episode.title}}</div>\n\t\t\t<div class=\"subtitle\">{{{episode.description}}}</div>\n\t\t\t<hr/>\n\t\t\t<div class=\"player\">\n\t\t\t\t<audio src=\"{{episode.mediaUrl}}\" controls></audio>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\n</div>"
+	module.exports = "<div>\n\t{{> podcastSidebar}}\n\t\n\t<div class=\"col-md-8 col-md-offset-1 section\">\n\t\t<div class=\"episode-detail\">\n\t\t\t<div class=\"title\">{{episode.title}}</div>\n\t\t\t<div class=\"subtitle\">{{{episode.description}}}</div>\n\t\t\t<hr/>\n\t\t\t<div class=\"player\">\n\t\t\t\t<audio src=\"{{episode.mediaUrl}}\" preload=\"none\" controls></audio>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\n</div>"
 
 /***/ },
 /* 21 */

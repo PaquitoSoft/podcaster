@@ -37,16 +37,17 @@ export class RouterEngine extends EventsEmitter {
 	}
 
 	navigate(info) {
-		let ctrl = new info.Controller(info.data);
+		let ctrl = new info.Controller(info.data),
+			$newEl = ctrl.render();
 
 		// Clean up previous controller
 		if (this.currentController) {
 			this.currentController.destroy();
 		}
 
-		// dom.emptyEl(this.$mainEl);
-		this.$mainEl.innerHTML = '';
-		this.$mainEl.appendChild(ctrl.render());
+		ctrl.onBeforeMounted();
+		this.$mainEl.replaceChild($newEl, this.$mainEl.firstChild);
+		ctrl.onInsertedIntoDOM($newEl);
 		this.currentController = ctrl;
 
 		this.trigger(RouterEvents.navigationEnd, event);

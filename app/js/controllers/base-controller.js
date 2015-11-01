@@ -27,6 +27,12 @@ class BaseController {
 		}
 	}
 
+	onInsertedIntoDOM($el) {
+		this.$el = $el;
+		this.configureEvents();
+		this.onMounted();
+	}
+
 	navTo(event, $target) {
 		event.preventDefault();
 		RouterEngine.navTo($target.getAttribute('href'));
@@ -34,15 +40,27 @@ class BaseController {
 
 	render() {
 		let doc = this.domParser.parseFromString(Mustache.render(this.template, this.data, this.partials), 'text/html');
-		this.$el = doc.body.firstChild;
-		this.configureEvents();
-		return this.$el;
+		return doc.body.firstChild;
+	}
+
+	update() {
+		let $parent = this.$el.parentNode,
+			$oldEl = this.$el,
+			$newEl = this.render();
+
+		dom.removeEvents($oldEl);
+		$parent.replaceChild($newEl, $oldEl);
+		this.$el = $newEl;
 	}
 
 	destroy() {
 		dom.removeEvents(this.$el);
 		this.$el = null;
 	}
+
+	// Hooks
+	onBeforeMounted(){}
+	onMounted(){}
 
 }
 

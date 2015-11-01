@@ -136,14 +136,13 @@ body {
 }
 .filter .badge {
 	font-size: 25px;
+	background-color: #337ab7;
+	min-width: 55px;
 }
 .filter #filter {
 	display: inline;
 	width: 80%;
 	margin-left: 10px;
-}
-.filter .badge {
-	background-color: #337ab7;
 }
 .filter .favorites {
 	margin-left: 10px;
