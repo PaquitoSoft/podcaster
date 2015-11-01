@@ -1,13 +1,15 @@
 import Mustache from 'mustache';
+import { RouterEngine } from '../plugins/router';
 import * as dom from '../plugins/dom';
 
 class BaseController {
 	
-	constructor(data, template, partials = {}) {
-		this.data = data;
-		this.template = template;
-		this.partials = partials;
-		this.events = {};
+	constructor(options) {
+		this.data = options.data;
+		this.template = options.template;
+		this.partials = options.partials;
+		this.domEvents = options.domEvents;
+		this.defaultNavigation = (typeof options.defaultNavigation === 'undefined') ? true : options.defaultNavigation;
 
 		// https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
 		// http://caniuse.com/#feat=xml-serializer
@@ -15,10 +17,19 @@ class BaseController {
 	}
 
 	configureEvents() {
-		for (let key in this.events) {
+		for (let key in this.domEvents) {
 			let tokens = key.split('|');
-			dom.addEvent(this.$el, tokens[0], tokens[1] || undefined, this.events[key].bind(this));
+			dom.addEvent(this.$el, tokens[0], tokens[1] || undefined, this[this.domEvents[key]].bind(this));
 		}
+
+		if (this.defaultNavigation) {
+			dom.addEvent(this.$el, 'click', 'a', this.navTo);
+		}
+	}
+
+	navTo(event, $target) {
+		event.preventDefault();
+		RouterEngine.navTo($target.getAttribute('href'));
 	}
 
 	render() {

@@ -36,35 +36,20 @@ export class RouterEngine extends EventsEmitter {
 		document.addEventListener('DOMContentLoaded', this.processNavigation.bind(this));
 	}
 
-	_navigate(error, template, data) {
-		if (error) {
-			this.trigger(RouterEvents.navigationError, error);
-		} else {
-			this.$mainEl.innerHTML = Mustache.render(template, data, data.partials || {});
+	navigate(info) {
+		let ctrl = new info.Controller(info.data);
+
+		// Clean up previous controller
+		if (this.currentController) {
+			this.currentController.destroy();
 		}
-	}
 
-	navigate(error, Controller, data = {}) {
-		if (error) {
-			this.trigger(RouterEvents.navigationError, error);
-		} else {
-			try {
-				let ctrl = new Controller(data);
+		// dom.emptyEl(this.$mainEl);
+		this.$mainEl.innerHTML = '';
+		this.$mainEl.appendChild(ctrl.render());
+		this.currentController = ctrl;
 
-				// Clean up previous controller
-				if (this.currentController) {
-					this.currentController.destroy();
-				}
-
-				// dom.emptyEl(this.$mainEl);
-				this.$mainEl.innerHTML = '';
-				this.$mainEl.appendChild(ctrl.render());
-				this.currentController = ctrl;
-			} catch (err) {
-				console.error('RouterEngine::navigate# Error navigating:', err);
-				this.trigger(RouterEvents.navigationError, err);
-			}
-		}
+		this.trigger(RouterEvents.navigationEnd, event);
 	}
 
 	processRoute(path, state = {}) {
@@ -75,15 +60,18 @@ export class RouterEngine extends EventsEmitter {
 		for (; i < len; i++) {
 			if (routes[i].path.matches(_path)) {
 				try {
-					routes[i].handler.call(
-						null,
-						{
+					routes[i].handler({
 							url: _path,
 							params: routes[i].path.match(_path),
 							state
-						},
-						this.navigate.bind(this)
-					);
+						})
+					.then(this.navigate.bind(this))
+					.catch((navError) => {
+						console.error('RouterEngine::navigate# Error navigating:', navError);
+						this.trigger(RouterEvents.navigationEnd, event);
+						this.trigger(RouterEvents.navigationError, navError);
+					});
+
 					break;
 				} catch (err) {
 					console.warn('Router::processRoute# Error executing route handler:', err);
@@ -105,8 +93,6 @@ export class RouterEngine extends EventsEmitter {
 
 		console.log('Plugins::router::processNavigation# Trying to navigate:', event);
 		this.processRoute(path, event.state);
-
-		this.trigger(RouterEvents.navigationEnd, event);
 	}
 
 	static navTo(path, state = {}) {

@@ -52,11 +52,11 @@
 
 	var _pluginsRouter = __webpack_require__(1);
 
-	var _configRoutes = __webpack_require__(8);
+	var _configRoutes = __webpack_require__(9);
 
 	var _configRoutes2 = _interopRequireDefault(_configRoutes);
 
-	var _pluginsDom = __webpack_require__(13);
+	var _pluginsDom = __webpack_require__(8);
 
 	var dom = _interopRequireWildcard(_pluginsDom);
 
@@ -104,7 +104,7 @@
 
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-	var _get = function get(_x6, _x7, _x8) { var _again = true; _function: while (_again) { var object = _x6, property = _x7, receiver = _x8; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x6 = parent; _x7 = property; _x8 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+	var _get = function get(_x5, _x6, _x7) { var _again = true; _function: while (_again) { var object = _x5, property = _x6, receiver = _x7; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x5 = parent; _x6 = property; _x7 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
@@ -126,7 +126,7 @@
 
 	var _eventsEmitter2 = _interopRequireDefault(_eventsEmitter);
 
-	var _dom = __webpack_require__(13);
+	var _dom = __webpack_require__(8);
 
 	var dom = _interopRequireWildcard(_dom);
 
@@ -172,43 +172,27 @@
 		}
 
 		_createClass(RouterEngine, [{
-			key: '_navigate',
-			value: function _navigate(error, template, data) {
-				if (error) {
-					this.trigger(RouterEvents.navigationError, error);
-				} else {
-					this.$mainEl.innerHTML = _mustache2['default'].render(template, data, data.partials || {});
-				}
-			}
-		}, {
 			key: 'navigate',
-			value: function navigate(error, Controller) {
-				var data = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+			value: function navigate(info) {
+				var ctrl = new info.Controller(info.data);
 
-				if (error) {
-					this.trigger(RouterEvents.navigationError, error);
-				} else {
-					try {
-						var ctrl = new Controller(data);
-
-						// Clean up previous controller
-						if (this.currentController) {
-							this.currentController.destroy();
-						}
-
-						// dom.emptyEl(this.$mainEl);
-						this.$mainEl.innerHTML = '';
-						this.$mainEl.appendChild(ctrl.render());
-						this.currentController = ctrl;
-					} catch (err) {
-						console.error('RouterEngine::navigate# Error navigating:', err);
-						this.trigger(RouterEvents.navigationError, err);
-					}
+				// Clean up previous controller
+				if (this.currentController) {
+					this.currentController.destroy();
 				}
+
+				// dom.emptyEl(this.$mainEl);
+				this.$mainEl.innerHTML = '';
+				this.$mainEl.appendChild(ctrl.render());
+				this.currentController = ctrl;
+
+				this.trigger(RouterEvents.navigationEnd, event);
 			}
 		}, {
 			key: 'processRoute',
 			value: function processRoute(path) {
+				var _this = this;
+
 				var state = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
 				var routes = this.registry,
@@ -219,11 +203,16 @@
 				for (; i < len; i++) {
 					if (routes[i].path.matches(_path)) {
 						try {
-							routes[i].handler.call(null, {
+							routes[i].handler({
 								url: _path,
 								params: routes[i].path.match(_path),
 								state: state
-							}, this.navigate.bind(this));
+							}).then(this.navigate.bind(this))['catch'](function (navError) {
+								console.error('RouterEngine::navigate# Error navigating:', navError);
+								_this.trigger(RouterEvents.navigationEnd, event);
+								_this.trigger(RouterEvents.navigationError, navError);
+							});
+
 							break;
 						} catch (err) {
 							console.warn('Router::processRoute# Error executing route handler:', err);
@@ -246,8 +235,6 @@
 
 				console.log('Plugins::router::processNavigation# Trying to navigate:', event);
 				this.processRoute(path, event.state);
-
-				this.trigger(RouterEvents.navigationEnd, event);
 			}
 		}], [{
 			key: 'navTo',
@@ -1552,6 +1539,94 @@
 
 /***/ },
 /* 8 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, '__esModule', {
+		value: true
+	});
+	exports.findById = findById;
+	exports.findEl = findEl;
+	exports.findEls = findEls;
+	exports.emptyEl = emptyEl;
+	exports.addEvent = addEvent;
+	exports.removeEvents = removeEvents;
+	var CUSTOM_EVENTS_NAME = '_pcEvents';
+
+	function matches($el, selector) {
+		var _matches = $el.matches || $el.msMatchesSelector;
+		return _matches.call($el, selector);
+	}
+
+	function findById(id) {
+		return document.getElementById(id);
+	}
+
+	function findEl(selector, container) {
+		return (container || document).querySelector(selector);
+	}
+
+	function findEls(selector, container) {
+		return Array.from((container || document).querySelectorAll(selector));
+	}
+
+	function emptyEl($el) {
+		// It seems this is way faster than innerHTML = '' with heavy populated elements
+		// http://jsperf.com/innerhtml-vs-removechild/ (check several of its versions)
+		while ($el.firstChild) {
+			$el.removeChild($el.firstChild);
+		}
+	}
+
+	function addEvent($el, eventType, delegatedSelector, listener) {
+		if (delegatedSelector === undefined) delegatedSelector = null;
+
+		// TODO It seems a better approach to use WeakMaps
+		// (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)
+		var _eventsMap = $el[CUSTOM_EVENTS_NAME] || {},
+		    _eventsListeners = _eventsMap[eventType] || [];
+
+		if (delegatedSelector) {
+			var _listener2 = function _listener2(event) {
+				var $target = event.target;
+
+				while ($target !== event.currentTarget && !matches($target, delegatedSelector)) {
+					$target = $target.parentElement;
+				}
+
+				if ($target && $target !== event.currentTarget) {
+					listener.call($target, event, $target);
+				}
+			};
+			$el.addEventListener(eventType, _listener2);
+			_eventsListeners.push(_listener2);
+		} else {
+			$el.addEventListener(eventType, listener);
+			_eventsListeners.push(_listener);
+		}
+
+		_eventsMap.eventType = _eventsListeners;
+		$el[CUSTOM_EVENTS_NAME] = _eventsMap;
+	}
+
+	function removeEvents($el) {
+		var eventType = arguments.length <= 1 || arguments[1] === undefined ? '*' : arguments[1];
+
+		var _eventsMap = $el[CUSTOM_EVENTS_NAME] || {};
+
+		Object.keys(_eventsMap).forEach(function (_eventType) {
+			if (_eventType === eventType || _eventType === '*') {
+				_eventsMap[eventType].forEach(function (listener) {
+					$el.removeEventListener(eventType, listener);
+				});
+				_eventsMap[eventType] = null;
+			}
+		});
+	}
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1562,71 +1637,80 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _modelsPodcast = __webpack_require__(9);
+	var _modelsPodcast = __webpack_require__(10);
 
 	var _modelsPodcast2 = _interopRequireDefault(_modelsPodcast);
 
-	var _controllersHomeController = __webpack_require__(17);
+	var _controllersHomeController = __webpack_require__(14);
 
 	var _controllersHomeController2 = _interopRequireDefault(_controllersHomeController);
 
-	var _controllersPodcastController = __webpack_require__(19);
+	var _controllersPodcastController = __webpack_require__(18);
 
 	var _controllersPodcastController2 = _interopRequireDefault(_controllersPodcastController);
+
+	var _controllersEpisodeController = __webpack_require__(19);
+
+	var _controllersEpisodeController2 = _interopRequireDefault(_controllersEpisodeController);
 
 	exports['default'] = [{
 		path: '/',
 		handler: function homePageController(context, next) {
-			_modelsPodcast2['default'].findAll().then(function (data) {
-				next(null, _controllersHomeController2['default'], {
-					podcasts: data
-				});
-			})['catch'](next);
+			return new Promise(function (resolve, reject) {
+				_modelsPodcast2['default'].findAll().then(function (data) {
+					resolve({
+						Controller: _controllersHomeController2['default'],
+						data: {
+							podcasts: data
+						}
+					});
+				})['catch'](reject);
+			});
 		}
 	}, {
 		path: '/podcast/:podcastId',
 		handler: function podcastController(context, next) {
-			console.log('Routes::podcastController# Context:', context);
-			_modelsPodcast2['default'].findById(context.params.namedParams.podcastId).then(function (data) {
-				next(null, _controllersPodcastController2['default'], {
-					podcast: data
-				});
-			})['catch'](next);
-		}
-	}
-
-	/*,
-	'/podcast/:podcastId': function podcastController(context, next) {
-		PodcastModel.findById(context.params.podcastId)
-			.then(function(data) {
-				next(null, PodcastPage, {
-					podcast: data
-				});
-			})
-			.catch(next);
-	},
-	'/podcast/:podcastId/episode/:episodeId': function episodeController(context, next) {
-		// When loading the page in this route we need to fetch the data
-		if (!context.state.episode) {
-			PodcastModel.findById(context.params.podcastId)
-				.then(function(podcast) {
-					next(null, EpisodePage, {
-						podcast: podcast,
-						episode: podcast.episodes.filter(function(ep) {
-							return ep.id === context.params.episodeId;
-						})[0]
+			return new Promise(function (resolve, reject) {
+				_modelsPodcast2['default'].findById(context.params.namedParams.podcastId).then(function (data) {
+					resolve({
+						Controller: _controllersPodcastController2['default'],
+						data: {
+							podcast: data
+						}
 					});
-				})
-				.catch(next);
-		} else {
-			next(null, EpisodePage);
+				})['catch'](reject);
+			});
 		}
-	}*/
-	];
+	}, {
+		path: '/podcast/:podcastId/episode/:episodeId',
+		handler: function episodeController(context, next) {
+			return new Promise(function (resolve, reject) {
+				// When loading the page in this route we need to fetch the data
+				if (!context.state.episode) {
+					_modelsPodcast2['default'].findById(context.params.namedParams.podcastId).then(function (podcast) {
+						resolve({
+							Controller: _controllersEpisodeController2['default'],
+							data: {
+								podcast: podcast,
+								episode: podcast.episodes.filter(function (ep) {
+									return ep.id === context.params.namedParams.episodeId;
+								})[0]
+							}
+						});
+					})['catch'](reject);
+				} else {
+					resolve({
+						Controller: _controllersEpisodeController2['default'],
+						data: context.state
+					});
+				}
+			});
+		}
+	}];
 	module.exports = exports['default'];
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1647,11 +1731,11 @@
 
 	var _lscache2 = _interopRequireDefault(_lscache);
 
-	var _pluginsAjax = __webpack_require__(14);
+	var _pluginsAjax = __webpack_require__(12);
 
 	var ajax = _interopRequireWildcard(_pluginsAjax);
 
-	var _pluginsDom = __webpack_require__(13);
+	var _pluginsDom = __webpack_require__(8);
 
 	var dom = _interopRequireWildcard(_pluginsDom);
 
@@ -1663,8 +1747,6 @@
 
 	var PODCASTS_LIST_CACHE_TTL = 1440; // minutes (one day)
 	var PODCAST_DETAIL_CACHE_TTL = 2880; // (two days)
-	// const PODCASTS_LIST_CACHE_TTL = 1; // minutes (one day)
-	// const PODCAST_DETAIL_CACHE_TTL = 2; // (two days)
 
 	function getPodcastLite(podcastId) {
 		return new Promise(function (resolve, reject) {
@@ -1788,7 +1870,6 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 10 */,
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -2146,98 +2227,6 @@
 
 /***/ },
 /* 12 */
-/***/ function(module, exports) {
-
-	module.exports = "<div class=\"podcasts-grid\">\n\t<div class=\"row filter\">\n\t\t<div class=\"col-md-5 col-md-offset-7\">\n\t\t\t<span class=\"badge\">{{podcasts.length}}</span>\n\t\t\t<input id=\"filter\" type=\"text\" class=\"form-control input-lg\" autoFocus \n\t\t\t\tplaceholder=\"Filter podcasts...\" on-input=\"filterPodcasts\" value=\"{{filter}}\">\n\t\t</div>\n\t</div>\n\n\t<div class=\"row\">\n\t\t<div class=\"col-md-12\">\n\t\t\t<div class=\"row podcasts\">\n\t\t\t\t{{#podcasts}}\n\t\t\t\t\t{{> podcastSummary}}\n\t\t\t\t{{/podcasts}}\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\n</div>"
-
-/***/ },
-/* 13 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, '__esModule', {
-		value: true
-	});
-	exports.findById = findById;
-	exports.findEl = findEl;
-	exports.findEls = findEls;
-	exports.emptyEl = emptyEl;
-	exports.addEvent = addEvent;
-	exports.removeEvents = removeEvents;
-	var CUSTOM_EVENTS_NAME = '_pcEvents';
-
-	function matches($el, selector) {
-		var _matches = $el.matches || $el.msMatchesSelector;
-		return _matches.call($el, selector);
-	}
-
-	function findById(id) {
-		return document.getElementById(id);
-	}
-
-	function findEl(selector, container) {
-		return (container || document).querySelector(selector);
-	}
-
-	function findEls(selector, container) {
-		return Array.from((container || document).querySelectorAll(selector));
-	}
-
-	function emptyEl($el) {
-		// It seems this is way faster than innerHTML = '' with heavy populated elements
-		// http://jsperf.com/innerhtml-vs-removechild/ (check several of its versions)
-		while ($el.firstChild) {
-			$el.removeChild($el.firstChild);
-		}
-	}
-
-	function addEvent($el, eventType, delegatedSelector, listener) {
-		// TODO It seems a better approach to use WeakMaps
-		// (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)
-		var _eventsMap = $el[CUSTOM_EVENTS_NAME] || {},
-		    _eventsListeners = _eventsMap[eventType] || [];
-
-		if (delegatedSelector) {
-			var _listener2 = function _listener2(event) {
-				var $target = event.target;
-
-				while ($target !== event.currentTarget && !matches($target, delegatedSelector)) {
-					$target = $target.parentElement;
-				}
-
-				if ($target && $target !== event.currentTarget) {
-					listener.call($target, event, $target);
-				}
-			};
-			$el.addEventListener(eventType, _listener2);
-			_eventsListeners.push(_listener2);
-		} else {
-			$el.addEventListener(eventType, listener);
-			_eventsListeners.push(_listener);
-		}
-
-		_eventsMap.eventType = _eventsListeners;
-		$el[CUSTOM_EVENTS_NAME] = _eventsMap;
-	}
-
-	function removeEvents($el) {
-		var eventType = arguments.length <= 1 || arguments[1] === undefined ? '*' : arguments[1];
-
-		var _eventsMap = $el[CUSTOM_EVENTS_NAME] || {};
-
-		Object.keys(_eventsMap).forEach(function (_eventType) {
-			if (_eventType === eventType || _eventType === '*') {
-				_eventsMap[eventType].forEach(function (listener) {
-					$el.removeEventListener(eventType, listener);
-				});
-				_eventsMap[eventType] = null;
-			}
-		});
-	}
-
-/***/ },
-/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(fetch) {'use strict';
@@ -2383,10 +2372,10 @@
 			document.body.appendChild(script);
 		});
 	}
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
 
 /***/ },
-/* 15 */
+/* 13 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*** IMPORTS FROM imports-loader ***/
@@ -2730,13 +2719,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 16 */
-/***/ function(module, exports) {
-
-	module.exports = "<div class=\"col-xs-12 col-sm-3 col-md-3 col-lg-3 podcast-summary\">\n\t<div class=\"box\">\n\t\t<a href=\"/podcast/{{id}}\">\n\t\t\t<div class=\"box-icon\">\n\t\t\t\t<img src=\"{{cover}}\" alt=\"{{name}}\">\n\t\t\t</div>\n\t\t\t<div class=\"info\">\n\t\t\t\t<h4 class=\"text-center\">{{name}}</h4>\n\t\t\t\t<p>\n\t\t\t\t\t<span class=\"text-center\">\n\t\t\t\t\t\t<span>Author: </span>\n\t\t\t\t\t\t<span>{{author}}</span>\n\t\t\t\t\t</span>\n\t\t\t\t</p>\n\t\t\t</div>\n\t\t</a>\n\t</div>\n</div>"
-
-/***/ },
-/* 17 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2744,8 +2727,6 @@
 	Object.defineProperty(exports, '__esModule', {
 		value: true
 	});
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
@@ -2755,17 +2736,15 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var _pluginsRouter = __webpack_require__(1);
-
-	var _baseController = __webpack_require__(18);
+	var _baseController = __webpack_require__(15);
 
 	var _baseController2 = _interopRequireDefault(_baseController);
 
-	var _viewsPagesHomeHtml = __webpack_require__(12);
+	var _viewsPagesHomeHtml = __webpack_require__(16);
 
 	var _viewsPagesHomeHtml2 = _interopRequireDefault(_viewsPagesHomeHtml);
 
-	var _viewsPartialsPodcastSummaryHtml = __webpack_require__(16);
+	var _viewsPartialsPodcastSummaryHtml = __webpack_require__(17);
 
 	var _viewsPartialsPodcastSummaryHtml2 = _interopRequireDefault(_viewsPartialsPodcastSummaryHtml);
 
@@ -2775,22 +2754,14 @@
 		function HomeController(data) {
 			_classCallCheck(this, HomeController);
 
-			_get(Object.getPrototypeOf(HomeController.prototype), 'constructor', this).call(this, data, _viewsPagesHomeHtml2['default'], {
-				podcastSummary: _viewsPartialsPodcastSummaryHtml2['default']
+			_get(Object.getPrototypeOf(HomeController.prototype), 'constructor', this).call(this, {
+				data: data,
+				template: _viewsPagesHomeHtml2['default'],
+				partials: {
+					podcastSummary: _viewsPartialsPodcastSummaryHtml2['default']
+				}
 			});
-
-			this.events = {
-				'click|.podcast-summary a': this.navToPodcast
-			};
 		}
-
-		_createClass(HomeController, [{
-			key: 'navToPodcast',
-			value: function navToPodcast(event, $target) {
-				event.preventDefault();
-				_pluginsRouter.RouterEngine.navTo($target.getAttribute('href'));
-			}
-		}]);
 
 		return HomeController;
 	})(_baseController2['default']);
@@ -2799,7 +2770,7 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 18 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2820,20 +2791,21 @@
 
 	var _mustache2 = _interopRequireDefault(_mustache);
 
-	var _pluginsDom = __webpack_require__(13);
+	var _pluginsRouter = __webpack_require__(1);
+
+	var _pluginsDom = __webpack_require__(8);
 
 	var dom = _interopRequireWildcard(_pluginsDom);
 
 	var BaseController = (function () {
-		function BaseController(data, template) {
-			var partials = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
+		function BaseController(options) {
 			_classCallCheck(this, BaseController);
 
-			this.data = data;
-			this.template = template;
-			this.partials = partials;
-			this.events = {};
+			this.data = options.data;
+			this.template = options.template;
+			this.partials = options.partials;
+			this.domEvents = options.domEvents;
+			this.defaultNavigation = typeof options.defaultNavigation === 'undefined' ? true : options.defaultNavigation;
 
 			// https://developer.mozilla.org/en-US/docs/Web/API/DOMParser
 			// http://caniuse.com/#feat=xml-serializer
@@ -2843,10 +2815,20 @@
 		_createClass(BaseController, [{
 			key: 'configureEvents',
 			value: function configureEvents() {
-				for (var key in this.events) {
+				for (var key in this.domEvents) {
 					var tokens = key.split('|');
-					dom.addEvent(this.$el, tokens[0], tokens[1] || undefined, this.events[key].bind(this));
+					dom.addEvent(this.$el, tokens[0], tokens[1] || undefined, this[this.domEvents[key]].bind(this));
 				}
+
+				if (this.defaultNavigation) {
+					dom.addEvent(this.$el, 'click', 'a', this.navTo);
+				}
+			}
+		}, {
+			key: 'navTo',
+			value: function navTo(event, $target) {
+				event.preventDefault();
+				_pluginsRouter.RouterEngine.navTo($target.getAttribute('href'));
 			}
 		}, {
 			key: 'render',
@@ -2871,7 +2853,19 @@
 	module.exports = exports['default'];
 
 /***/ },
-/* 19 */
+/* 16 */
+/***/ function(module, exports) {
+
+	module.exports = "<div class=\"podcasts-grid\">\n\t<div class=\"row filter\">\n\t\t<div class=\"col-md-5 col-md-offset-7\">\n\t\t\t<span class=\"badge\">{{podcasts.length}}</span>\n\t\t\t<input id=\"filter\" type=\"text\" class=\"form-control input-lg\" autoFocus \n\t\t\t\tplaceholder=\"Filter podcasts...\" on-input=\"filterPodcasts\" value=\"{{filter}}\">\n\t\t</div>\n\t</div>\n\n\t<div class=\"row\">\n\t\t<div class=\"col-md-12\">\n\t\t\t<div class=\"row podcasts\">\n\t\t\t\t{{#podcasts}}\n\t\t\t\t\t{{> podcastSummary}}\n\t\t\t\t{{/podcasts}}\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\n</div>"
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	module.exports = "<div class=\"col-xs-12 col-sm-3 col-md-3 col-lg-3 podcast-summary\">\n\t<div class=\"box\">\n\t\t<a href=\"/podcast/{{id}}\">\n\t\t\t<div class=\"box-icon\">\n\t\t\t\t<img src=\"{{cover}}\" alt=\"{{name}}\">\n\t\t\t</div>\n\t\t\t<div class=\"info\">\n\t\t\t\t<h4 class=\"text-center\">{{name}}</h4>\n\t\t\t\t<p>\n\t\t\t\t\t<span class=\"text-center\">\n\t\t\t\t\t\t<span>Author: </span>\n\t\t\t\t\t\t<span>{{author}}</span>\n\t\t\t\t\t</span>\n\t\t\t\t</p>\n\t\t\t</div>\n\t\t</a>\n\t</div>\n</div>"
+
+/***/ },
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2890,13 +2884,11 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var _pluginsRouter = __webpack_require__(1);
-
-	var _baseController = __webpack_require__(18);
+	var _baseController = __webpack_require__(15);
 
 	var _baseController2 = _interopRequireDefault(_baseController);
 
-	var _viewsPagesPodcastHtml = __webpack_require__(20);
+	var _viewsPagesPodcastHtml = __webpack_require__(22);
 
 	var _viewsPagesPodcastHtml2 = _interopRequireDefault(_viewsPagesPodcastHtml);
 
@@ -2904,26 +2896,45 @@
 
 	var _viewsPartialsPodcastSidebarHtml2 = _interopRequireDefault(_viewsPartialsPodcastSidebarHtml);
 
+	var _pluginsRouter = __webpack_require__(1);
+
 	var PodcastController = (function (_BaseController) {
 		_inherits(PodcastController, _BaseController);
 
 		function PodcastController(data) {
 			_classCallCheck(this, PodcastController);
 
-			_get(Object.getPrototypeOf(PodcastController.prototype), 'constructor', this).call(this, data, _viewsPagesPodcastHtml2['default'], {
-				podcastSidebar: _viewsPartialsPodcastSidebarHtml2['default']
+			_get(Object.getPrototypeOf(PodcastController.prototype), 'constructor', this).call(this, {
+				data: data,
+				template: _viewsPagesPodcastHtml2['default'],
+				partials: {
+					podcastSidebar: _viewsPartialsPodcastSidebarHtml2['default']
+				},
+				defaultNavigation: false,
+				domEvents: {
+					'click|.podcast-sidebar a': 'navTo',
+					'click|.podcast-episodes a': 'navToEpisode'
+				}
 			});
-
-			// this.events = {
-			// 	'click|.podcast-summary a': this.navToPodcast
-			// };
 		}
 
 		_createClass(PodcastController, [{
 			key: 'navToEpisode',
 			value: function navToEpisode(event, $target) {
+				var href = $target.getAttribute('href'),
+				    episodeId = href.match(/.*\/(\d*_\d)*/)[1],
+				    episode = undefined;
+
 				event.preventDefault();
-				_pluginsRouter.RouterEngine.navTo($target.getAttribute('href'));
+
+				episode = this.data.podcast.episodes.find(function (episode) {
+					return episode.id === episodeId;
+				});
+
+				_pluginsRouter.RouterEngine.navTo(href, {
+					podcast: this.data.podcast,
+					episode: episode
+				});
 			}
 		}]);
 
@@ -2934,16 +2945,73 @@
 	module.exports = exports['default'];
 
 /***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, '__esModule', {
+		value: true
+	});
+
+	var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var _baseController = __webpack_require__(15);
+
+	var _baseController2 = _interopRequireDefault(_baseController);
+
+	var _viewsPagesEpisodeHtml = __webpack_require__(20);
+
+	var _viewsPagesEpisodeHtml2 = _interopRequireDefault(_viewsPagesEpisodeHtml);
+
+	var _viewsPartialsPodcastSidebarHtml = __webpack_require__(21);
+
+	var _viewsPartialsPodcastSidebarHtml2 = _interopRequireDefault(_viewsPartialsPodcastSidebarHtml);
+
+	var EpisodeController = (function (_BaseController) {
+		_inherits(EpisodeController, _BaseController);
+
+		function EpisodeController(data) {
+			_classCallCheck(this, EpisodeController);
+
+			_get(Object.getPrototypeOf(EpisodeController.prototype), 'constructor', this).call(this, {
+				data: data,
+				template: _viewsPagesEpisodeHtml2['default'],
+				partials: {
+					podcastSidebar: _viewsPartialsPodcastSidebarHtml2['default']
+				}
+			});
+		}
+
+		return EpisodeController;
+	})(_baseController2['default']);
+
+	exports['default'] = EpisodeController;
+	module.exports = exports['default'];
+
+/***/ },
 /* 20 */
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n\t<PodcastSidebar podcast={{podcast}} />\n\n\t<div class=\"col-md-8 col-md-offset-1 section podcast-episodes-count\">\n\t\t<span>\n\t\t\tEpisodes: {{podcast.episodes.length}}\n\t\t</span>\n\t</div>\n\n\t<div class=\"col-md-8 col-md-offset-1 section\">\n\t\t<div class=\"podcast-episodes\">\n\t\t\t<table class=\"table table-hover table-striped\">\n\t\t\t\t<thead>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th>Title</th>\n\t\t\t\t\t\t<th>Date</th>\n\t\t\t\t\t\t<th>Duration</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t{{#podcast.episodes}}\n\t\t\t\t\t\t<tr class=\"podcast-episode-summary\">\n\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t<a href=\"/podcast/{{podcast.id}}/episode/{{id}}\" on-click=\"navToEpisode\">{{title}}</a>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t<td>{{date}}</td>\n\t\t\t\t\t\t\t<td class=\"duration\">{{duration}}</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t{{/podcast.episodes}}\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>\n\t</div>\n\n</div>"
+	module.exports = "<div>\n\t{{> podcastSidebar}}\n\t\n\t<div class=\"col-md-8 col-md-offset-1 section\">\n\t\t<div class=\"episode-detail\">\n\t\t\t<div class=\"title\">{{episode.title}}</div>\n\t\t\t<div class=\"subtitle\">{{{episode.description}}}</div>\n\t\t\t<hr/>\n\t\t\t<div class=\"player\">\n\t\t\t\t<audio src=\"{{episode.mediaUrl}}\" controls></audio>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\n</div>"
 
 /***/ },
 /* 21 */
 /***/ function(module, exports) {
 
-	module.exports = "<div class=\"col-md-3 section\">\n\t<div class=\"podcast-cover text-center\">\n\t\t<a href=\"/podcast/{{podcast.id}}\">\n\t\t\t<img src=\"{{podcast.cover}}\" alt=\"{{podcast.name}}\">\n\t\t</a>\n\t</div>\n\t<hr/>\n\n\t<div class=\"podcast-title\">\n\t\t<a href=\"/podcast/{{podcast.id}}\">\n\t\t\t<div class=\"title\">{{podcast.name}}</div>\n\t\t\t<div class=\"author\"><span>by&nbsp;</span>{{podcast.author}}</div>\t\n\t\t</a>\n\t</div>\n\t<hr/>\n\n\t<div class=\"podcast-description\">\n\t\t<div>Description:</div>\n\t\t<p>{{podcast.description}}</p>\n\t</div>\n</div>"
+	module.exports = "<div class=\"col-md-3 section podcast-sidebar\">\n\t<div class=\"podcast-cover text-center\">\n\t\t<a href=\"/podcast/{{podcast.id}}\">\n\t\t\t<img src=\"{{podcast.cover}}\" alt=\"{{podcast.name}}\">\n\t\t</a>\n\t</div>\n\t<hr/>\n\n\t<div class=\"podcast-title\">\n\t\t<a href=\"/podcast/{{podcast.id}}\">\n\t\t\t<div class=\"title\">{{podcast.name}}</div>\n\t\t\t<div class=\"author\"><span>by&nbsp;</span>{{podcast.author}}</div>\t\n\t\t</a>\n\t</div>\n\t<hr/>\n\n\t<div class=\"podcast-description\">\n\t\t<div>Description:</div>\n\t\t<p>{{podcast.description}}</p>\n\t</div>\n</div>"
+
+/***/ },
+/* 22 */
+/***/ function(module, exports) {
+
+	module.exports = "<div>\n\t{{> podcastSidebar}}\n\n\t<div class=\"col-md-8 col-md-offset-1 section podcast-episodes-count\">\n\t\t<span>\n\t\t\tEpisodes: {{podcast.episodes.length}}\n\t\t</span>\n\t</div>\n\n\t<div class=\"col-md-8 col-md-offset-1 section\">\n\t\t<div class=\"podcast-episodes\">\n\t\t\t<table class=\"table table-hover table-striped\">\n\t\t\t\t<thead>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th>Title</th>\n\t\t\t\t\t\t<th>Date</th>\n\t\t\t\t\t\t<th>Duration</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t{{#podcast.episodes}}\n\t\t\t\t\t\t<tr class=\"podcast-episode-summary\">\n\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t<a href=\"/podcast/{{podcast.id}}/episode/{{id}}\" on-click=\"navToEpisode\">{{title}}</a>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t<td>{{date}}</td>\n\t\t\t\t\t\t\t<td class=\"duration\">{{duration}}</td>\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t{{/podcast.episodes}}\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>\n\t</div>\n\n</div>"
 
 /***/ }
 /******/ ]);

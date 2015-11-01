@@ -25,7 +25,7 @@ export function emptyEl($el) {
 	}
 }
 
-export function addEvent($el, eventType, delegatedSelector, listener) {
+export function addEvent($el, eventType, delegatedSelector = null, listener) {
 	// TODO It seems a better approach to use WeakMaps
 	// (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)
 	let _eventsMap = $el[CUSTOM_EVENTS_NAME] || {},

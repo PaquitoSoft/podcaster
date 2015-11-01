@@ -1,59 +1,69 @@
 import PodcastModel from '../models/podcast';
 import HomePageController from '../controllers/home-controller';
 import PodcastPageController from '../controllers/podcast-controller';
+import EpisodePageController from '../controllers/episode-controller';
 
 export default [
 	{
 		path: '/',
 		handler: function homePageController(context, next) {
-			PodcastModel.findAll()
-				.then(function(data) {
-					next(null, HomePageController, {
-						podcasts: data
-					});
-				})
-				.catch(next);
+			return new Promise((resolve, reject) => {
+				PodcastModel.findAll()
+					.then(function(data) {
+						resolve({
+							Controller: HomePageController,
+							data: {
+								podcasts: data
+							}
+						});
+					})
+					.catch(reject);				
+			});
 		}
 	},
 	{
 		path: '/podcast/:podcastId',
 		handler: function podcastController(context, next) {
-			console.log('Routes::podcastController# Context:', context);
-			PodcastModel.findById(context.params.namedParams.podcastId)
-				.then(function(data) {
-					next(null, PodcastPageController, {
-						podcast: data
+			return new Promise((resolve, reject) => {
+				PodcastModel.findById(context.params.namedParams.podcastId)
+					.then(function(data) {
+						resolve({
+							Controller:PodcastPageController, 
+							data: {
+								podcast: data
+							}
+						});
+					})
+					.catch(reject);
+			});
+		}
+	},
+	{
+		path: '/podcast/:podcastId/episode/:episodeId',
+		handler: function episodeController(context, next) {
+			return new Promise((resolve, reject) => {
+				// When loading the page in this route we need to fetch the data
+				if (!context.state.episode) {
+					PodcastModel.findById(context.params.namedParams.podcastId)
+						.then(function(podcast) {
+							resolve({
+								Controller: EpisodePageController,
+								data: {
+									podcast: podcast,
+									episode: podcast.episodes.filter(function(ep) {
+										return ep.id === context.params.namedParams.episodeId;
+									})[0]
+								}
+							});
+						})
+						.catch(reject);
+				} else {
+					resolve({
+						Controller: EpisodePageController,
+						data: context.state
 					});
-				})
-				.catch(next);	
+				}				
+			});
 		}
 	}
-
-	/*,
-	'/podcast/:podcastId': function podcastController(context, next) {
-		PodcastModel.findById(context.params.podcastId)
-			.then(function(data) {
-				next(null, PodcastPage, {
-					podcast: data
-				});
-			})
-			.catch(next);
-	},
-	'/podcast/:podcastId/episode/:episodeId': function episodeController(context, next) {
-		// When loading the page in this route we need to fetch the data
-		if (!context.state.episode) {
-			PodcastModel.findById(context.params.podcastId)
-				.then(function(podcast) {
-					next(null, EpisodePage, {
-						podcast: podcast,
-						episode: podcast.episodes.filter(function(ep) {
-							return ep.id === context.params.episodeId;
-						})[0]
-					});
-				})
-				.catch(next);
-		} else {
-			next(null, EpisodePage);
-		}
-	}*/
 ];

@@ -10,8 +10,6 @@ const FAVORITES_SERVICE_URL = 'https://ps-podcaster.firebaseio.com/favorites.jso
 
 const PODCASTS_LIST_CACHE_TTL = 1440; // minutes (one day)
 const PODCAST_DETAIL_CACHE_TTL = 2880; // (two days)
-// const PODCASTS_LIST_CACHE_TTL = 1; // minutes (one day)
-// const PODCAST_DETAIL_CACHE_TTL = 2; // (two days)
 
 function getPodcastLite(podcastId) {
 	return new Promise(function(resolve, reject) {
