@@ -6,7 +6,7 @@ import EpisodePageController from '../controllers/episode-controller';
 export default [
 	{
 		path: '/',
-		handler: function homePageController(context, next) {
+		handler: function homePageController(/*context*/) {
 			return new Promise((resolve, reject) => {
 				PodcastModel.findAll()
 					.then(function(data) {
@@ -23,7 +23,7 @@ export default [
 	},
 	{
 		path: '/podcast/:podcastId',
-		handler: function podcastController(context, next) {
+		handler: function podcastController(context) {
 			return new Promise((resolve, reject) => {
 				PodcastModel.findById(context.params.namedParams.podcastId)
 					.then(function(data) {
@@ -40,7 +40,7 @@ export default [
 	},
 	{
 		path: '/podcast/:podcastId/episode/:episodeId',
-		handler: function episodeController(context, next) {
+		handler: function episodeController(context) {
 			return new Promise((resolve, reject) => {
 				// When loading the page in this route we need to fetch the data
 				if (!context.state.episode) {

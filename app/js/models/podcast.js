@@ -6,7 +6,6 @@ const PODCASTS_DATASOURCE_URL = 'https://itunes.apple.com/us/rss/toppodcasts/lim
 const PODCAST_ID_DATASOURCE_URL = 'https://itunes.apple.com/lookup?id=';
 const PODCAST_CACHE_PREFIX = 'podcast-data_';
 const CORS_SERVICE_URL = 'http://crossorigin.me/';
-const FAVORITES_SERVICE_URL = 'https://ps-podcaster.firebaseio.com/favorites.json';
 
 const PODCASTS_LIST_CACHE_TTL = 1440; // minutes (one day)
 const PODCAST_DETAIL_CACHE_TTL = 2880; // (two days)

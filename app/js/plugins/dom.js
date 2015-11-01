@@ -47,7 +47,7 @@ export function addEvent($el, eventType, delegatedSelector = null, listener) {
 		_eventsListeners.push(_listener);
 	} else {
 		$el.addEventListener(eventType, listener);
-		_eventsListeners.push(_listener);
+		_eventsListeners.push(listener);
 	}
 
 	_eventsMap.eventType = _eventsListeners;

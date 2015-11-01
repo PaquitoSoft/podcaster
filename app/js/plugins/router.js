@@ -1,7 +1,5 @@
-import Mustache from 'mustache';
 import RoutePattern from 'route-pattern';
 import EventsEmitter from './events-emitter';
-import * as dom from './dom';
 
 // function noop(){};
 
@@ -15,16 +13,12 @@ export let RouterEvents = Object.freeze({
 
 export class RouterEngine extends EventsEmitter {
 
-	constructor($mainEl, routesHandlers = {}, engineOptions = { hashbang: true }) {
+	constructor($mainEl, routesHandlers = {}) {
 		super(); // This seems to be required
 
 		this.$mainEl = $mainEl;
-		this.currentController;
+		this.currentController = null;
 
-		// this.registry = {};
-		// for (let pathExpression in routesHandlers) {
-		//	this.registry[RoutePattern.fromString(pathExpression)] = routesHandlers[pathExpression];
-		// }
 		this.registry = routesHandlers.map((routeConfig) => {
 			return {
 				path: RoutePattern.fromString(routeConfig.path),
@@ -54,6 +48,7 @@ export class RouterEngine extends EventsEmitter {
 	}
 
 	processRoute(path, state = {}) {
+		/*eslint-disable no-loop-func */
 		let routes = this.registry,
 			_path = path.replace(/^\/#/, ''),
 			i = 0, len = routes.length;
@@ -62,10 +57,10 @@ export class RouterEngine extends EventsEmitter {
 			if (routes[i].path.matches(_path)) {
 				try {
 					routes[i].handler({
-							url: _path,
-							params: routes[i].path.match(_path),
-							state
-						})
+						url: _path,
+						params: routes[i].path.match(_path),
+						state
+					})
 					.then(this.navigate.bind(this))
 					.catch((navError) => {
 						console.error('RouterEngine::navigate# Error navigating:', navError);
@@ -85,6 +80,7 @@ export class RouterEngine extends EventsEmitter {
 			console.warn('Router::processRoute# Route not handled:', _path);
 			this.trigger(RouterEvents.routeNotFound, _path);
 		}
+		/*eslint-enable no-loop-func */
 	}
 
 	processNavigation(event) {

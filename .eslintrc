@@ -16,7 +16,7 @@
             2,
             "always"
         ],
-        "no-console": [1],
+        "no-console": [0],
         "curly": [2],
         "eqeqeq": [2],
         "no-alert": [2],
@@ -54,6 +54,17 @@
     },
     "env": {
         "browser": true
+    },
+     "ecmaFeatures": {
+        "arrowFunctions": true,
+        "blockBindings": true,
+        "classes": true,
+        "defaultParams": true,
+        "destructuring": true,
+        "forOf": true,
+        "modules": true,
+        "superInFunctions": true,
+        "templateStrings": true
     },
     "globals": {
     	"lscache": true,

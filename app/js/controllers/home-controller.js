@@ -21,7 +21,7 @@ class HomeController extends BaseController {
 		});
 
 		this.data.originalPodcasts = data.podcasts;
-		this.data.filter =  lscache.get(FILTER_KEY) || '';
+		this.data.filter = lscache.get(FILTER_KEY) || '';
 	}
 
 	_filterPodcasts(filter) {
