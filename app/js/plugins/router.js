@@ -44,7 +44,7 @@ export class RouterEngine extends EventsEmitter {
 		ctrl.onInsertedIntoDOM($newEl);
 		this.currentController = ctrl;
 
-		this.trigger(RouterEvents.navigationEnd, event);
+		this.trigger(RouterEvents.navigationEnd);
 	}
 
 	processRoute(path, state = {}) {
@@ -66,7 +66,7 @@ export class RouterEngine extends EventsEmitter {
 				.then(this.navigate.bind(this))
 				.catch((navError) => {
 					console.error('RouterEngine::navigate# Error navigating:', navError);
-					this.trigger(RouterEvents.navigationEnd, event);
+					this.trigger(RouterEvents.navigationEnd);
 					this.trigger(RouterEvents.navigationError, navError);
 				});
 			} catch (err) {
@@ -84,7 +84,7 @@ export class RouterEngine extends EventsEmitter {
 		let location = window.location,
 			path = location.pathname + location.search + location.hash;
 
-		this.processRoute(path, event.state);
+		this.processRoute(path, event.state || undefined);
 	}
 
 	static navTo(path, state = {}) {
