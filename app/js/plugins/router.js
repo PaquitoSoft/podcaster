@@ -48,39 +48,35 @@ export class RouterEngine extends EventsEmitter {
 	}
 
 	processRoute(path, state = {}) {
-		/*eslint-disable no-loop-func */
 		let routes = this.registry,
 			_path = path.replace(/^\/#/, ''),
-			i = 0, len = routes.length;
+			routeConfig;
 
-		for (; i < len; i++) {
-			if (routes[i].path.matches(_path)) {
-				try {
-					routes[i].handler({
-						url: _path,
-						params: routes[i].path.match(_path),
-						state
-					})
-					.then(this.navigate.bind(this))
-					.catch((navError) => {
-						console.error('RouterEngine::navigate# Error navigating:', navError);
-						this.trigger(RouterEvents.navigationEnd, event);
-						this.trigger(RouterEvents.navigationError, navError);
-					});
+		routeConfig = routes.find((rc) => {
+			return rc.path.matches(_path);
+		});
 
-					break;
-				} catch (err) {
-					console.warn('Router::processRoute# Error executing route handler:', err);
-					this.trigger(RouterEvents.navigationError, err);
-				}
+		if (routeConfig) {
+			try {
+				routeConfig.handler({
+					url: _path,
+					params: routeConfig.path.match(_path),
+					state
+				})
+				.then(this.navigate.bind(this))
+				.catch((navError) => {
+					console.error('RouterEngine::navigate# Error navigating:', navError);
+					this.trigger(RouterEvents.navigationEnd, event);
+					this.trigger(RouterEvents.navigationError, navError);
+				});
+			} catch (err) {
+				console.warn('Router::processRoute# Error executing route handler:', err);
+				this.trigger(RouterEvents.navigationError, err);
 			}
-		}
-
-		if (i === len) {
+		} else {
 			console.warn('Router::processRoute# Route not handled:', _path);
 			this.trigger(RouterEvents.routeNotFound, _path);
 		}
-		/*eslint-enable no-loop-func */
 	}
 
 	processNavigation(event) {
@@ -88,7 +84,6 @@ export class RouterEngine extends EventsEmitter {
 		let location = window.location,
 			path = location.pathname + location.search + location.hash;
 
-		console.log('Plugins::router::processNavigation# Trying to navigate:', event);
 		this.processRoute(path, event.state);
 	}
 
