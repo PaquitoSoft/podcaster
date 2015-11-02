@@ -198,6 +198,9 @@ body {
 .episode-detail .subtitle {
 	font-style: italic;
 }
+.episode-detail .subtitle img {
+	width: 100%;
+}
 .episode-detail .player audio {
 	width: 100%;
 }
