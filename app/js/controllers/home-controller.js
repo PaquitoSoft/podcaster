@@ -25,19 +25,15 @@ class HomeController extends BaseController {
 	}
 
 	_filterPodcasts(filter) {
-		console.log('HomeController::filterPodcasts# Filtering...', filter);
-		this.data.filter = filter;
 		let regExp = new RegExp(filter, 'i');
 		
-		console.debug('HomeController::filteringPodcasts# Previous podcasts length:', this.data.podcasts.length);
-		console.time('filteringPodcasts');		
 		this.data.podcasts = this.data.originalPodcasts.filter((podcast) => {
 			return regExp.test(podcast.name + podcast.author);
 		});
-		console.timeEnd('filteringPodcasts');
-
+		
 		this.update();
 
+		this.data.filter = filter;
 		lscache.set(FILTER_KEY, filter);
 	}
 
