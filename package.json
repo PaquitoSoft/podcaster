@@ -33,6 +33,7 @@
     "grunt-filerev": "^2.3.1",
     "grunt-surge": "^0.6.2",
     "grunt-usemin": "^3.1.1",
+    "grunt-webpack": "^1.0.11",
     "imports-loader": "^0.6.5",
     "load-grunt-tasks": "^3.3.0",
     "node-static": "^0.7.7",

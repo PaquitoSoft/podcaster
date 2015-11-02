@@ -1,3 +1,5 @@
+var webpack = require('webpack');
+
 module.exports = function(grunt) {
 	require('load-grunt-tasks')(grunt);
 
@@ -49,11 +51,24 @@ module.exports = function(grunt) {
 			html: 'dist/index.html'
 		},
 
+		webpack: {
+			options: require('./webpack.config.js'),
+			build: {
+				output: {
+					path: './dist/js',
+					filename: 'app.js'
+				},
+				plugins: [
+					new webpack.optimize.UglifyJsPlugin()
+				]
+			}
+		},
+
 		surge: {
 			'podcaster': {
 				options: {
 					project: 'dist/',
-					domain: 'podcaster.surge.sh'
+					domain: 'podcaster-vanilla.surge.sh'
 				}
 			}
 		}
@@ -69,7 +84,7 @@ module.exports = function(grunt) {
 		'useminPrepare',
 		'concat:generated',
 		'cssmin:generated',
-		'uglify:generated',
+		'webpack',
 		'filerev',
 		'usemin'
 	]);
