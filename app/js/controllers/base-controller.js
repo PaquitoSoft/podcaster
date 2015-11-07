@@ -4,7 +4,7 @@ import * as dom from '../plugins/dom';
 
 class BaseController {
 	
-	constructor(options) {
+	constructor(options = {}) {
 		this.data = options.data;
 		this.template = options.template;
 		this.partials = options.partials;

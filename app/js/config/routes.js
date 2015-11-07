@@ -17,7 +17,7 @@ export default [
 							}
 						});
 					})
-					.catch(reject);				
+					.catch(reject);
 			});
 		}
 	},
