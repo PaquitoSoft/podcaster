@@ -47,9 +47,9 @@
 
 		function cacheResponse(ttl) {
 			return function(data) {
-				if (ttl) {
-					lscache.set(data.url, data.result, ttl); // Last parameter is TTL in minutes
-				}
+				// if (ttl) {
+				//	lscache.set(data.url, data.result, ttl); // Last parameter is TTL in minutes
+				// }
 				return data.result;
 			};
 		}
