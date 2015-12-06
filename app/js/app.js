@@ -48,12 +48,18 @@
 		function cleanSW() {
 			return new Promise(function(resolve, reject) {
 				console.info('Unregistering service worker...');
-				navigator.serviceWorker.getRegistrations().then(function(registrations) {
-					for(var registration of registrations) {
-						registration.unregister();
+				// navigator.serviceWorker.getRegistrations().then(function(registrations) {
+				//	for(var registration of registrations) {
+				//		registration.unregister();
+				//	}
+				//	resolve();
+				// });
+				navigator.serviceWorker.getRegistration().then(registration => {
+					if (registration) {
+						registration.unregister();	
 					}
 					resolve();
-				});	
+				});
 			});
 		}
 
@@ -62,7 +68,11 @@
 				if (navigator.serviceWorker) {
 					navigator.serviceWorker.getRegistration()
 						.then(registration => {
-							resolve(registration.active.scriptURL.includes(SERVICE_WORKER_SCRIPT));
+							resolve(
+								registration &&
+								registration.active &&
+								registration.active.scriptURL.includes(SERVICE_WORKER_SCRIPT)
+							);
 						});
 				} else {
 					resolve(false);
@@ -92,22 +102,23 @@
 					occurred over 24 hours ago.
 		*/
 
-		if (/reset/.test(window.location.href)) {
-			cleanSW().then(registerSW);
-			// cleanSW();
-		} else {
-			// TODO Test if the SW is already registered. I think there's no
-			//	need to register it again (if version has not changed).
-			// registerSW();
-			isAlreadyRegisteredSW(SERVICE_WORKER_SCRIPT)
-				.then(isRegistered => {
-					if (isRegistered) {
-						updateSW();
-					} else {
-						registerSW();
-					}
-				});
-		}
+		// if (/reset/.test(window.location.href)) {
+		//	// cleanSW().then(registerSW);
+		//	cleanSW();
+		// } else {
+		//	// TODO Test if the SW is already registered. I think there's no
+		//	//	need to register it again (if version has not changed).
+		//	// registerSW();
+		//	isAlreadyRegisteredSW(SERVICE_WORKER_SCRIPT)
+		//		.then(isRegistered => {
+		//			if (isRegistered) {
+		//				// updateSW();
+		//				// registerSW();
+		//			} else {
+		//				registerSW();
+		//			}
+		//		});
+		// }
 
 	});
 
